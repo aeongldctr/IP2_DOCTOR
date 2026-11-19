@@ -2,6 +2,7 @@
 
 using Api.Common.Extensions;
 using Application.Abstractions.Messaging;
+using Application.Features.Auth.Login;
 using Application.Features.Auth.Register;
 using Domain.Common;
 
@@ -16,6 +17,12 @@ public static class AuthEndpoints
             .WithSummary("Create a new user account")
             .Produces<RegisterResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapPost("/login", Login)
+            .WithName("Login")
+            .WithSummary("Sign in and receive an access token")
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
     }
 
     private static async Task<IResult> Register(
@@ -27,5 +34,16 @@ public static class AuthEndpoints
         return result.IsSuccess
             ? TypedResults.Created($"/api/auth/users/{result.Value!.UserId}", result.Value)
             : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> Login(
+        LoginCommand command,
+        ICommandHandler<LoginCommand, Result<LoginResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(command, cancellationToken);
+        return result.Match(
+            onSuccess: value => TypedResults.Ok(value),
+            onFailure: _ => result.ToProblemDetails());
     }
 }
