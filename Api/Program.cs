@@ -27,6 +27,7 @@ using FluentValidation;
 using Infrastructure.Authentication;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -119,6 +120,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAppAuthorization();
+builder.Services.AddSingleton<IAuthorizationHandler, AdmissionOwnerHandler>();
 
 //backgroundjobs
 builder.Services.AddHostedService<Infrastructure.BackgroundJobs.RevokedTokenCleanupService>();

@@ -1,12 +1,16 @@
 namespace Api.Features.Admissions;
 
+using System.Security.Claims;
 using Api.Common.Authorization;
 using Api.Common.Extensions;
+using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Application.Features.Admissions.CreateAdmission;
 using Application.Features.Admissions.GetAdmissionById;
 using Application.Features.Admissions.GetAllAdmissions;
 using Domain.Common;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 public static class AdmissionEndpoints
 {
@@ -47,9 +51,29 @@ public static class AdmissionEndpoints
 
     private static async Task<IResult> GetById(
         Guid id,
+        IAuthorizationService authorizationService,
         IQueryHandler<GetAdmissionByIdQuery, Result<GetAdmissionByIdResponse>> handler,
+        IAppDbContext dbContext,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
+        var admission = await dbContext.Admissions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+
+        if (admission is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var authResult = await authorizationService.AuthorizeAsync(
+            user, admission, new AdmissionOwnerRequirement());
+
+        if (!authResult.Succeeded)
+        {
+            return TypedResults.Forbid();
+        }
+
         var query = new GetAdmissionByIdQuery(id);
         var result = await handler.HandleAsync(query, cancellationToken);
         return result.IsSuccess
