@@ -1,5 +1,6 @@
 namespace Api.Features.Courses;
 
+using Api.Common.Authorization;
 using Api.Common.Extensions;
 using Application.Abstractions.Messaging;
 using Application.Features.Courses.CreateCourse;
@@ -20,22 +21,27 @@ public static class CourseEndpoints
             .RequireAuthorization();
 
         group.MapGet("/", GetAll)
+            .RequireAuthorization()
             .WithName("GetAllCourses")
             .WithSummary("Get all courses");
 
         group.MapPost("/", Create)
+            .RequireAuthorization(Policies.CanManageCourses)
             .WithName("CreateCourse")
             .WithSummary("Create a new course");
 
         group.MapGet("/{id:guid}", GetById)
+            .RequireAuthorization()
             .WithName(GetByIdRouteName)
             .WithSummary("Get course by ID");
 
         group.MapPut("/{id:guid}", Update)
+            .RequireAuthorization(Policies.CanManageCourses)
             .WithName("UpdateCourse")
             .WithSummary("Update an existing course");
 
         group.MapDelete("/{id:guid}", Delete)
+            .RequireAuthorization(Policies.CanManageCourses)
             .WithName("DeleteCourse")
             .WithSummary("Delete a course");
     }
