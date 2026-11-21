@@ -17,12 +17,14 @@ public sealed class JwtTokenService(
     public string GenerateAccessToken(ApplicationUser user)
     {
         var now = timeProvider.GetUtcNow().UtcDateTime;
+        var iatUnix = EpochTime.GetIntDate(now);
 
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat, iatUnix.ToString(), ClaimValueTypes.Integer64),
             new(ClaimTypes.Role, user.Role.ToString()),
             new("full_name", $"{user.FirstName} {user.LastName}")
         };
